@@ -1,0 +1,6 @@
+apiVersion: v2
+name: payment-service
+description: ICOP Payment Service — Resilience4j circuit breaker + Kafka
+type: application
+version: 1.0.0
+appVersion: "1.0.0"

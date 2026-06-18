@@ -59,7 +59,9 @@ services:
       retries: 5
 
   api-gateway:
-    build: ./api-gateway
+    build:
+      context: .
+      dockerfile: api-gateway/Dockerfile
     container_name: icop-api-gateway
     ports:
       - "8080:8080"
@@ -77,7 +79,9 @@ services:
       - icop-network
 
   user-service:
-    build: ./user-service
+    build:
+      context: .
+      dockerfile: user-service/Dockerfile
     container_name: icop-user-service
     ports:
       - "8081:8081"
@@ -98,7 +102,9 @@ services:
       - icop-network
 
   order-service:
-    build: ./order-service
+    build:
+      context: .
+      dockerfile: order-service/Dockerfile
     container_name: icop-order-service
     ports:
       - "8082:8082"
@@ -118,7 +124,9 @@ services:
       - icop-network
 
   payment-service:
-    build: ./payment-service
+    build:
+      context: .
+      dockerfile: payment-service/Dockerfile
     container_name: icop-payment-service
     ports:
       - "8083:8083"
@@ -138,7 +146,9 @@ services:
       - icop-network
 
   notification-service:
-    build: ./notification-service
+    build:
+      context: .
+      dockerfile: notification-service/Dockerfile
     container_name: icop-notification-service
     ports:
       - "8084:8084"

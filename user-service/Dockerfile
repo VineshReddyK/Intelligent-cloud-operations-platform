@@ -1,13 +1,17 @@
-FROM eclipse-temurin:21-jdk-alpine AS builder
+FROM maven:3.9-eclipse-temurin-21-alpine AS builder
 WORKDIR /app
 COPY pom.xml .
-COPY src ./src
-RUN --mount=type=cache,target=/root/.m2 \
-    apk add --no-cache maven && \
-    mvn clean package -DskipTests
+COPY api-gateway/pom.xml api-gateway/pom.xml
+COPY user-service/pom.xml user-service/pom.xml
+COPY order-service/pom.xml order-service/pom.xml
+COPY payment-service/pom.xml payment-service/pom.xml
+COPY notification-service/pom.xml notification-service/pom.xml
+RUN mvn dependency:go-offline -pl user-service -am -q
+COPY user-service/src user-service/src
+RUN mvn package -pl user-service -am -DskipTests -q
 
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
-COPY --from=builder /app/target/*.jar app.jar
+COPY --from=builder /app/user-service/target/*.jar app.jar
 EXPOSE 8081
 ENTRYPOINT ["java", "-jar", "app.jar"]

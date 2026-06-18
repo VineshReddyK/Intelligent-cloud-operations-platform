@@ -164,8 +164,8 @@ GET  /api/payments/order/{id}   — Get payment by order
 | Phase | Status | Description |
 |---|---|---|
 | **Phase 1** | ✅ Complete | Java Spring Boot microservices + Kafka + PostgreSQL |
-| **Phase 2** | 🔜 Next | AWS EKS + Terraform + Helm + GitHub Actions CD |
-| **Phase 3** | 🔜 | Prometheus + Grafana + Loki + OpenTelemetry |
+| **Phase 2** | ✅ Complete | AWS EKS + Terraform + Helm + GitHub Actions CD |
+| **Phase 3** | 🔜 Next | Prometheus + Grafana + Loki + OpenTelemetry |
 | **Phase 4** | 🔜 | AI anomaly detection + failure prediction (DJL) |
 | **Phase 5** | 🔜 | Kubernetes Operator + AI-driven auto-remediation |
 

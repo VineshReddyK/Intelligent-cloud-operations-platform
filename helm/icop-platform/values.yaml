@@ -1,0 +1,52 @@
+global:
+  imageTag: "latest"
+  kafkaBootstrapServers: ""
+  jwtSecret: ""
+
+api-gateway:
+  image:
+    repository: ""
+    tag: ""
+  env:
+    JWT_SECRET: ""
+    USER_SERVICE_URL: "http://user-service:8081"
+    ORDER_SERVICE_URL: "http://order-service:8082"
+    PAYMENT_SERVICE_URL: "http://payment-service:8083"
+
+user-service:
+  image:
+    repository: ""
+    tag: ""
+  env:
+    SPRING_DATASOURCE_URL: ""
+    SPRING_DATASOURCE_USERNAME: "icop"
+    SPRING_DATASOURCE_PASSWORD: ""
+    SPRING_KAFKA_BOOTSTRAP_SERVERS: ""
+    JWT_SECRET: ""
+
+order-service:
+  image:
+    repository: ""
+    tag: ""
+  env:
+    SPRING_DATASOURCE_URL: ""
+    SPRING_DATASOURCE_USERNAME: "icop"
+    SPRING_DATASOURCE_PASSWORD: ""
+    SPRING_KAFKA_BOOTSTRAP_SERVERS: ""
+
+payment-service:
+  image:
+    repository: ""
+    tag: ""
+  env:
+    SPRING_DATASOURCE_URL: ""
+    SPRING_DATASOURCE_USERNAME: "icop"
+    SPRING_DATASOURCE_PASSWORD: ""
+    SPRING_KAFKA_BOOTSTRAP_SERVERS: ""
+
+notification-service:
+  image:
+    repository: ""
+    tag: ""
+  env:
+    SPRING_KAFKA_BOOTSTRAP_SERVERS: ""
