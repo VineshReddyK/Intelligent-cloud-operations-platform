@@ -21,3 +21,6 @@ dependencies:
   - name: notification-service
     version: "1.0.0"
     repository: "file://../notification-service"
+  - name: ai-service
+    version: "1.0.0"
+    repository: "file://../ai-service"

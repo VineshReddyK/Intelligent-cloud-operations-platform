@@ -1,0 +1,41 @@
+replicaCount: 1
+
+image:
+  repository: ai-service
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8085
+
+env:
+  SPRING_PROFILES_ACTIVE: kubernetes
+  PROMETHEUS_URL: http://icop-observability-prometheus:9090
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://icop-otel-collector:4318
+
+resources:
+  requests:
+    cpu: 500m
+    memory: 1Gi
+  limits:
+    cpu: 2000m
+    # DJL PyTorch native libs need extra heap for tensor operations
+    memory: 2Gi
+
+autoscaling:
+  enabled: false
+
+livenessProbe:
+  httpGet:
+    path: /actuator/health/liveness
+    port: 8085
+  initialDelaySeconds: 90
+  periodSeconds: 30
+
+readinessProbe:
+  httpGet:
+    path: /actuator/health/readiness
+    port: 8085
+  initialDelaySeconds: 90
+  periodSeconds: 15

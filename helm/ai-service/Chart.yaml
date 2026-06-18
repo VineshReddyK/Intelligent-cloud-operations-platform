@@ -1,0 +1,6 @@
+apiVersion: v2
+name: ai-service
+description: ICOP AI Service - DJL-powered anomaly detection and failure prediction
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
