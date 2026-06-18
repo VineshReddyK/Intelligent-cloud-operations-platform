@@ -1,8 +1,11 @@
 name: CD — Build, Push to ECR, Deploy to EKS
 
 on:
-  push:
-    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      image-tag:
+        description: 'Image tag to deploy (defaults to short SHA)'
+        required: false
 
 env:
   AWS_REGION: us-east-1
