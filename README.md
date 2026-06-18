@@ -71,12 +71,14 @@ An **AI-powered cloud-native operations platform** built with Java 21, Spring Bo
 | Messaging | Apache Kafka 3.9.0 (KRaft mode) |
 | Resilience | Resilience4j 2.3.0 (Circuit Breaker) |
 | API Docs | SpringDoc OpenAPI 2.8.6 / Swagger UI |
-| Observability | Prometheus + Grafana (Phase 3) |
+| Tracing | Micrometer Tracing + OTel Collector + Tempo 2.7 |
+| Metrics | Prometheus 3.2 + Grafana 11.5 |
+| Logging | Loki 3.4 + Promtail (JSON via logstash-logback-encoder) |
 | AI/ML | Deep Java Library (Phase 4) |
 | K8s Operator | Fabric8 + CRD (Phase 5) |
 | Containerization | Docker (multi-stage builds) |
-| Orchestration | Kubernetes / AWS EKS (Phase 2) |
-| IaC | Terraform 1.10 (Phase 2) |
+| Orchestration | Kubernetes / AWS EKS 1.32 |
+| IaC | Terraform 1.10 |
 | CI/CD | GitHub Actions |
 | Build | Maven 3.9.16 |
 
@@ -124,6 +126,24 @@ mvn clean verify
 
 ---
 
+## Observability
+
+| Tool | URL | Purpose |
+|---|---|---|
+| **Grafana** | http://localhost:3000 | Dashboards (admin / icop_grafana) |
+| **Prometheus** | http://localhost:9090 | Metrics query and targets |
+| **Loki** | http://localhost:3100 | Log aggregation API |
+| **Tempo** | http://localhost:3200 | Distributed trace storage |
+| **OTel Collector** | localhost:4318 (HTTP) / 4317 (gRPC) | Trace ingestion |
+
+**Trace flow:** Spring Boot → OTel Collector → Tempo → Grafana  
+**Log flow:** Spring Boot JSON → Docker → Promtail → Loki → Grafana  
+**Metrics flow:** Spring Boot `/actuator/prometheus` → Prometheus → Grafana
+
+Every log line carries `traceId` and `spanId` in JSON — click a Grafana log line to jump directly to its trace in Tempo.
+
+---
+
 ## API Documentation
 
 Each service exposes Swagger UI at `/swagger-ui.html`:
@@ -165,8 +185,8 @@ GET  /api/payments/order/{id}   — Get payment by order
 |---|---|---|
 | **Phase 1** | ✅ Complete | Java Spring Boot microservices + Kafka + PostgreSQL |
 | **Phase 2** | ✅ Complete | AWS EKS + Terraform + Helm + GitHub Actions CD |
-| **Phase 3** | 🔜 Next | Prometheus + Grafana + Loki + OpenTelemetry |
-| **Phase 4** | 🔜 | AI anomaly detection + failure prediction (DJL) |
+| **Phase 3** | ✅ Complete | Prometheus + Grafana + Loki + Tempo + OTel tracing |
+| **Phase 4** | 🔜 Next | AI anomaly detection + failure prediction (DJL) |
 | **Phase 5** | 🔜 | Kubernetes Operator + AI-driven auto-remediation |
 
 ---
