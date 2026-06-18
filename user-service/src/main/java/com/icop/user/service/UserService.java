@@ -7,6 +7,7 @@ import com.icop.user.dto.UserResponse;
 import com.icop.user.entity.User;
 import com.icop.user.repository.UserRepository;
 import com.icop.user.security.JwtUtil;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -27,7 +28,7 @@ public class UserService implements UserDetailsService {
     private final AuthenticationManager authenticationManager;
 
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder,
-                       JwtUtil jwtUtil, AuthenticationManager authenticationManager) {
+                       JwtUtil jwtUtil, @Lazy AuthenticationManager authenticationManager) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;

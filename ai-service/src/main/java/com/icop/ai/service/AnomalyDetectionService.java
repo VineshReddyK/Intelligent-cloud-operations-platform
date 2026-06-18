@@ -76,7 +76,17 @@ public class AnomalyDetectionService {
                 zScore = Math.abs((currentValue - mean) / std);
                 isAnomaly = zScore > zScoreThreshold;
             } catch (Exception e) {
-                log.debug("NDArray computation skipped for {}: {}", key, e.getMessage());
+                // Pure Java fallback when DJL native engine is unavailable
+                float[] vals = toFloatArray(window);
+                double mean = 0.0;
+                for (float v : vals) mean += v;
+                mean /= vals.length;
+                double variance = 0.0;
+                for (float v : vals) variance += (v - mean) * (v - mean);
+                variance /= vals.length;
+                double std = Math.sqrt(variance + 1e-8);
+                zScore = Math.abs((currentValue - mean) / std);
+                isAnomaly = zScore > zScoreThreshold;
             }
         }
 

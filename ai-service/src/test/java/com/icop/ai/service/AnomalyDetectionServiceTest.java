@@ -3,29 +3,30 @@ package com.icop.ai.service;
 import ai.djl.ndarray.NDManager;
 import com.icop.ai.dto.AnomalyResult;
 import com.icop.ai.dto.MetricSnapshot;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@ExtendWith(MockitoExtension.class)
 class AnomalyDetectionServiceTest {
 
-    private NDManager manager;
+    @Mock
+    NDManager manager;
+
     private AnomalyDetectionService service;
 
     @BeforeEach
     void setUp() {
-        manager = NDManager.newBaseManager();
+        // manager.create() returns null by default; the service catches the resulting
+        // NullPointerException and falls back to pure-Java z-score computation.
         service = new AnomalyDetectionService(manager, 60, 2.5);
-    }
-
-    @AfterEach
-    void tearDown() {
-        manager.close();
     }
 
     @Test

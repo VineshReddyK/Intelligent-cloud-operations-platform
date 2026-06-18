@@ -1,7 +1,9 @@
 package com.icop.ai;
 
+import ai.djl.ndarray.NDManager;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
@@ -15,6 +17,9 @@ import org.springframework.test.context.TestPropertySource;
         "ai.anomaly.poll-interval-ms=999999999"
 })
 class AiServiceApplicationTests {
+
+    @MockBean
+    NDManager ndManager;
 
     @Test
     void contextLoads() {}

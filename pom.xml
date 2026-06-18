@@ -37,7 +37,6 @@
         <testcontainers.version>1.20.6</testcontainers.version>
         <logstash-logback.version>8.0</logstash-logback.version>
         <djl.version>0.31.0</djl.version>
-        <pytorch-native.version>2.5.1</pytorch-native.version>
         <fabric8.version>6.13.4</fabric8.version>
     </properties>
 
@@ -98,11 +97,6 @@
                 <groupId>ai.djl.pytorch</groupId>
                 <artifactId>pytorch-engine</artifactId>
                 <version>${djl.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>ai.djl.pytorch</groupId>
-                <artifactId>pytorch-native-auto</artifactId>
-                <version>${pytorch-native.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.fabric8</groupId>

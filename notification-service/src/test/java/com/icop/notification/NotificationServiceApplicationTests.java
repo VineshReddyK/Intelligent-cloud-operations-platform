@@ -6,7 +6,8 @@ import org.springframework.test.context.TestPropertySource;
 
 @SpringBootTest
 @TestPropertySource(properties = {
-        "spring.kafka.bootstrap-servers=localhost:9092"
+        "spring.kafka.bootstrap-servers=localhost:9092",
+        "spring.kafka.listener.auto-startup=false"
 })
 class NotificationServiceApplicationTests {
 
