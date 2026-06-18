@@ -14,7 +14,9 @@ import org.springframework.test.context.TestPropertySource;
         "spring.datasource.driver-class-name=org.h2.Driver",
         "spring.jpa.database-platform=org.hibernate.dialect.H2Dialect",
         "prometheus.url=http://localhost:9090",
-        "ai.anomaly.poll-interval-ms=999999999"
+        "ai.anomaly.poll-interval-ms=999999999",
+        "spring.jpa.hibernate.ddl-auto=create-drop",
+        "spring.flyway.enabled=false"
 })
 class AiServiceApplicationTests {
 

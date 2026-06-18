@@ -1,9 +1,12 @@
 server:
   port: 8086
+  shutdown: graceful
 
 spring:
   application:
     name: k8s-operator
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
 
 operator:
   reconcile-interval-ms: ${RECONCILE_INTERVAL_MS:30000}
@@ -15,7 +18,7 @@ management:
         include: health, info, prometheus, metrics
   endpoint:
     health:
-      show-details: always
+      show-details: when-authorized
   metrics:
     export:
       prometheus:
@@ -35,5 +38,5 @@ springdoc:
 
 logging:
   level:
-    com.icop: DEBUG
+    com.icop: ${LOG_LEVEL:INFO}
     io.fabric8: INFO

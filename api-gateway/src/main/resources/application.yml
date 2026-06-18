@@ -1,9 +1,12 @@
 server:
   port: 8080
+  shutdown: graceful
 
 spring:
   application:
     name: api-gateway
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
   cloud:
     gateway:
       routes:
@@ -38,12 +41,13 @@ spring:
       globalcors:
         cors-configurations:
           '[/**]':
-            allowedOrigins: "*"
-            allowedMethods: "*"
+            allowedOrigins: "${ALLOWED_ORIGINS:http://localhost:3000}"
+            allowedMethods: "GET,POST,PUT,DELETE,OPTIONS"
             allowedHeaders: "*"
+            allowCredentials: true
 
 jwt:
-  secret: ${JWT_SECRET:icop-super-secret-jwt-key-256-bits-minimum}
+  secret: ${JWT_SECRET}
 
 management:
   endpoints:
@@ -52,7 +56,7 @@ management:
         include: health, info, prometheus, metrics
   endpoint:
     health:
-      show-details: always
+      show-details: when-authorized
   metrics:
     export:
       prometheus:
@@ -63,3 +67,7 @@ management:
   otlp:
     tracing:
       endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4318}/v1/traces
+
+logging:
+  level:
+    com.icop: ${LOG_LEVEL:INFO}

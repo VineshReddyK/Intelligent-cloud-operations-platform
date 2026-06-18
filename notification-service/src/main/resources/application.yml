@@ -1,24 +1,33 @@
 server:
   port: 8084
+  shutdown: graceful
 
 spring:
   application:
     name: notification-service
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
   kafka:
     bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     consumer:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
-        spring.json.trusted.packages: "*"
+        spring.json.trusted.packages: "com.icop.user.event,com.icop.order.event,com.icop.payment.event"
         spring.json.value.default.type: java.util.Map
       auto-offset-reset: earliest
+    listener:
+      ack-mode: RECORD
+      missing-topics-fatal: false
 
 management:
   endpoints:
     web:
       exposure:
         include: health, info, prometheus, metrics
+  endpoint:
+    health:
+      show-details: when-authorized
   metrics:
     export:
       prometheus:
@@ -32,4 +41,4 @@ management:
 
 logging:
   level:
-    com.icop: DEBUG
+    com.icop: ${LOG_LEVEL:INFO}

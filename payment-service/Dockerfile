@@ -12,6 +12,9 @@ RUN mvn package -pl payment-service -am -DskipTests -q
 
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
+RUN addgroup -S icop && adduser -S icop -G icop
 COPY --from=builder /app/payment-service/target/*.jar app.jar
+RUN chown icop:icop app.jar
+USER icop
 EXPOSE 8083
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-XX:+UseContainerSupport", "-XX:MaxRAMPercentage=75.0", "-jar", "app.jar"]

@@ -11,7 +11,8 @@ import org.springframework.test.context.TestPropertySource;
         "spring.jpa.database-platform=org.hibernate.dialect.H2Dialect",
         "spring.jpa.hibernate.ddl-auto=create-drop",
         "spring.kafka.bootstrap-servers=localhost:9092",
-        "spring.kafka.listener.auto-startup=false"
+        "spring.kafka.listener.auto-startup=false",
+        "spring.flyway.enabled=false"
 })
 class PaymentServiceApplicationTests {
 

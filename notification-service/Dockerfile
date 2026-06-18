@@ -12,6 +12,9 @@ RUN mvn package -pl notification-service -am -DskipTests -q
 
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
+RUN addgroup -S icop && adduser -S icop -G icop
 COPY --from=builder /app/notification-service/target/*.jar app.jar
+RUN chown icop:icop app.jar
+USER icop
 EXPOSE 8084
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-XX:+UseContainerSupport", "-XX:MaxRAMPercentage=75.0", "-jar", "app.jar"]
