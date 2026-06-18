@@ -1,0 +1,6 @@
+apiVersion: v2
+name: k8s-operator
+description: ICOP Kubernetes Operator - IntelligentScalingPolicy CRD controller (Fabric8)
+type: application
+version: 1.0.0
+appVersion: "1.0.0"

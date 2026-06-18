@@ -51,3 +51,19 @@ scrape_configs:
     relabel_configs:
       - target_label: service
         replacement: notification-service
+
+  - job_name: ai-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ["ai-service:8085"]
+    relabel_configs:
+      - target_label: service
+        replacement: ai-service
+
+  - job_name: k8s-operator
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ["k8s-operator:8086"]
+    relabel_configs:
+      - target_label: service
+        replacement: k8s-operator

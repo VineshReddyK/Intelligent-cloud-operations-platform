@@ -1,0 +1,55 @@
+# RBAC for the ICOP Kubernetes Operator
+# Apply with: kubectl apply -f operator-rbac.yml
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: icop-operator
+  namespace: icop
+  labels:
+    app.kubernetes.io/part-of: icop-platform
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: icop-operator-role
+  labels:
+    app.kubernetes.io/part-of: icop-platform
+rules:
+  # Manage IntelligentScalingPolicy CRDs
+  - apiGroups: ["icop.io"]
+    resources: ["intelligentscalingpolicies", "intelligentscalingpolicies/status"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+
+  # Read and scale Deployments
+  - apiGroups: ["apps"]
+    resources: ["deployments", "deployments/scale"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+
+  # Read HPAs (for observing current scaling state)
+  - apiGroups: ["autoscaling"]
+    resources: ["horizontalpodautoscalers"]
+    verbs: ["get", "list", "watch"]
+
+  # Read pods and events for health assessment
+  - apiGroups: [""]
+    resources: ["pods", "events"]
+    verbs: ["get", "list", "watch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: icop-operator-binding
+  labels:
+    app.kubernetes.io/part-of: icop-platform
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: icop-operator-role
+subjects:
+  - kind: ServiceAccount
+    name: icop-operator
+    namespace: icop

@@ -56,6 +56,7 @@ An **AI-powered cloud-native operations platform** built with Java 21, Spring Bo
 | **Payment Service** | 8083 | Payment processing, Resilience4j circuit breaker, Kafka consumer + producer |
 | **Notification Service** | 8084 | Kafka consumer for all events, notification dispatch |
 | **AI Service** | 8085 | DJL anomaly detection (Z-score/NDArray), failure prediction, auto-remediation |
+| **K8s Operator** | 8086 | Fabric8 operator, IntelligentScalingPolicy CRD, AI-driven replica management |
 
 ---
 
@@ -76,7 +77,7 @@ An **AI-powered cloud-native operations platform** built with Java 21, Spring Bo
 | Metrics | Prometheus 3.2 + Grafana 11.5 |
 | Logging | Loki 3.4 + Promtail (JSON via logstash-logback-encoder) |
 | AI/ML | Deep Java Library 0.31.0 + PyTorch 2.5.1 (NDArray Z-score anomaly detection) |
-| K8s Operator | Fabric8 + CRD (Phase 5) |
+| K8s Operator | Fabric8 6.13.4 + IntelligentScalingPolicy CRD (AI-driven auto-scaling) |
 | Containerization | Docker (multi-stage builds) |
 | Orchestration | Kubernetes / AWS EKS 1.32 |
 | IaC | Terraform 1.10 |
@@ -188,7 +189,7 @@ GET  /api/payments/order/{id}   — Get payment by order
 | **Phase 2** | ✅ Complete | AWS EKS + Terraform + Helm + GitHub Actions CD |
 | **Phase 3** | ✅ Complete | Prometheus + Grafana + Loki + Tempo + OTel tracing |
 | **Phase 4** | ✅ Complete | AI anomaly detection + failure prediction (DJL + PyTorch NDArray) |
-| **Phase 5** | 🔜 Next | Kubernetes Operator + AI-driven auto-remediation |
+| **Phase 5** | ✅ Complete | Kubernetes Operator + IntelligentScalingPolicy CRD + Fabric8 + AI auto-scaling |
 
 ---
 

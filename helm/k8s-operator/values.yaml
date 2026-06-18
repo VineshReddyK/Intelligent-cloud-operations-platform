@@ -1,0 +1,43 @@
+replicaCount: 1
+
+image:
+  repository: k8s-operator
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8086
+
+serviceAccount:
+  name: icop-operator
+
+env:
+  SPRING_PROFILES_ACTIVE: kubernetes
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://icop-otel-collector:4318
+  RECONCILE_INTERVAL_MS: "30000"
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+autoscaling:
+  enabled: false
+
+livenessProbe:
+  httpGet:
+    path: /actuator/health/liveness
+    port: 8086
+  initialDelaySeconds: 30
+  periodSeconds: 30
+
+readinessProbe:
+  httpGet:
+    path: /actuator/health/readiness
+    port: 8086
+  initialDelaySeconds: 30
+  periodSeconds: 10

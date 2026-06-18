@@ -1,0 +1,59 @@
+# Example IntelligentScalingPolicy resources for all ICOP services
+# Apply with: kubectl apply -f example-scaling-policies.yml -n icop
+
+---
+apiVersion: icop.io/v1alpha1
+kind: IntelligentScalingPolicy
+metadata:
+  name: payment-service-policy
+  namespace: icop
+  labels:
+    app.kubernetes.io/part-of: icop-platform
+spec:
+  targetService: payment-service
+  minReplicas: 2
+  maxReplicas: 10
+  aiServiceUrl: http://ai-service:8085
+  scalingRules:
+    lowRiskReplicas: 2
+    mediumRiskReplicas: 4
+    highRiskReplicas: 7
+    criticalRiskReplicas: 10
+
+---
+apiVersion: icop.io/v1alpha1
+kind: IntelligentScalingPolicy
+metadata:
+  name: order-service-policy
+  namespace: icop
+  labels:
+    app.kubernetes.io/part-of: icop-platform
+spec:
+  targetService: order-service
+  minReplicas: 2
+  maxReplicas: 8
+  aiServiceUrl: http://ai-service:8085
+  scalingRules:
+    lowRiskReplicas: 2
+    mediumRiskReplicas: 3
+    highRiskReplicas: 6
+    criticalRiskReplicas: 8
+
+---
+apiVersion: icop.io/v1alpha1
+kind: IntelligentScalingPolicy
+metadata:
+  name: user-service-policy
+  namespace: icop
+  labels:
+    app.kubernetes.io/part-of: icop-platform
+spec:
+  targetService: user-service
+  minReplicas: 2
+  maxReplicas: 6
+  aiServiceUrl: http://ai-service:8085
+  scalingRules:
+    lowRiskReplicas: 2
+    mediumRiskReplicas: 3
+    highRiskReplicas: 5
+    criticalRiskReplicas: 6
