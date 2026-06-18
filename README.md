@@ -55,6 +55,7 @@ An **AI-powered cloud-native operations platform** built with Java 21, Spring Bo
 | **Order Service** | 8082 | Order lifecycle, Kafka producer (`ORDER_CREATED`, `ORDER_CANCELLED`) |
 | **Payment Service** | 8083 | Payment processing, Resilience4j circuit breaker, Kafka consumer + producer |
 | **Notification Service** | 8084 | Kafka consumer for all events, notification dispatch |
+| **AI Service** | 8085 | DJL anomaly detection (Z-score/NDArray), failure prediction, auto-remediation |
 
 ---
 
@@ -74,7 +75,7 @@ An **AI-powered cloud-native operations platform** built with Java 21, Spring Bo
 | Tracing | Micrometer Tracing + OTel Collector + Tempo 2.7 |
 | Metrics | Prometheus 3.2 + Grafana 11.5 |
 | Logging | Loki 3.4 + Promtail (JSON via logstash-logback-encoder) |
-| AI/ML | Deep Java Library (Phase 4) |
+| AI/ML | Deep Java Library 0.31.0 + PyTorch 2.5.1 (NDArray Z-score anomaly detection) |
 | K8s Operator | Fabric8 + CRD (Phase 5) |
 | Containerization | Docker (multi-stage builds) |
 | Orchestration | Kubernetes / AWS EKS 1.32 |
@@ -186,8 +187,8 @@ GET  /api/payments/order/{id}   — Get payment by order
 | **Phase 1** | ✅ Complete | Java Spring Boot microservices + Kafka + PostgreSQL |
 | **Phase 2** | ✅ Complete | AWS EKS + Terraform + Helm + GitHub Actions CD |
 | **Phase 3** | ✅ Complete | Prometheus + Grafana + Loki + Tempo + OTel tracing |
-| **Phase 4** | 🔜 Next | AI anomaly detection + failure prediction (DJL) |
-| **Phase 5** | 🔜 | Kubernetes Operator + AI-driven auto-remediation |
+| **Phase 4** | ✅ Complete | AI anomaly detection + failure prediction (DJL + PyTorch NDArray) |
+| **Phase 5** | 🔜 Next | Kubernetes Operator + AI-driven auto-remediation |
 
 ---
 
