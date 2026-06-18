@@ -72,6 +72,7 @@ services:
       USER_SERVICE_URL: http://user-service:8081
       ORDER_SERVICE_URL: http://order-service:8082
       PAYMENT_SERVICE_URL: http://payment-service:8083
+      AI_SERVICE_URL: http://ai-service:8085
       JWT_SECRET: ${JWT_SECRET:-icop-super-secret-jwt-key-256-bits-minimum}
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
     depends_on:
@@ -166,6 +167,28 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
+    networks:
+      - icop-network
+
+  ai-service:
+    build:
+      context: .
+      dockerfile: ai-service/Dockerfile
+    container_name: icop-ai-service
+    ports:
+      - "8085:8085"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ai_db
+      SPRING_DATASOURCE_USERNAME: icop
+      SPRING_DATASOURCE_PASSWORD: icop_secret
+      PROMETHEUS_URL: http://prometheus:9090
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+    depends_on:
+      postgres:
+        condition: service_healthy
+      prometheus:
+        condition: service_started
     networks:
       - icop-network
 

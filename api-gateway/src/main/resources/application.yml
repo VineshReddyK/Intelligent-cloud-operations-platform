@@ -27,6 +27,11 @@ spring:
           predicates:
             - Path=/api/notifications/**
 
+        - id: ai-service
+          uri: ${AI_SERVICE_URL:http://localhost:8085}
+          predicates:
+            - Path=/api/insights/**
+
       default-filters:
         - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
 
