@@ -18,24 +18,26 @@ resources:
     memory: "512Mi"
 
 autoscaling:
-  enabled: false
+  enabled: true
   minReplicas: 1
-  maxReplicas: 3
+  maxReplicas: 4
   targetCPUUtilizationPercentage: 70
 
 env:
   SPRING_KAFKA_BOOTSTRAP_SERVERS: ""
 
+sensitiveEnv: {}
+
 livenessProbe:
   httpGet:
     path: /actuator/health/liveness
-    port: 8084
+    port: management
   initialDelaySeconds: 60
   periodSeconds: 30
 
 readinessProbe:
   httpGet:
     path: /actuator/health/readiness
-    port: 8084
+    port: management
   initialDelaySeconds: 30
   periodSeconds: 10

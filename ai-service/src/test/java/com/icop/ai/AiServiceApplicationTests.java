@@ -16,7 +16,8 @@ import org.springframework.test.context.TestPropertySource;
         "prometheus.url=http://localhost:9090",
         "ai.anomaly.poll-interval-ms=999999999",
         "spring.jpa.hibernate.ddl-auto=create-drop",
-        "spring.flyway.enabled=false"
+        "spring.flyway.enabled=false",
+        "management.server.port=0"
 })
 class AiServiceApplicationTests {
 

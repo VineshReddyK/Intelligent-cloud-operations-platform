@@ -36,22 +36,28 @@ autoscaling:
   maxReplicas: 6
   targetCPUUtilizationPercentage: 70
 
+# Non-sensitive configuration
 env:
-  JWT_SECRET: ""
   USER_SERVICE_URL: "http://user-service:8081"
   ORDER_SERVICE_URL: "http://order-service:8082"
   PAYMENT_SERVICE_URL: "http://payment-service:8083"
+  ALLOWED_ORIGINS: "https://icop.example.com"
+
+# Sensitive values — set at deploy time via: --set sensitiveEnv.JWT_SECRET=<value>
+# Never commit real values here.
+sensitiveEnv:
+  JWT_SECRET: ""
 
 livenessProbe:
   httpGet:
     path: /actuator/health/liveness
-    port: 8080
+    port: management
   initialDelaySeconds: 60
   periodSeconds: 30
 
 readinessProbe:
   httpGet:
     path: /actuator/health/readiness
-    port: 8080
+    port: management
   initialDelaySeconds: 30
   periodSeconds: 10

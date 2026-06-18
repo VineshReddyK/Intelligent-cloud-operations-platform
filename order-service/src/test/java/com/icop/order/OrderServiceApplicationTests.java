@@ -12,7 +12,8 @@ import org.springframework.test.context.TestPropertySource;
         "spring.jpa.hibernate.ddl-auto=create-drop",
         "spring.kafka.bootstrap-servers=localhost:9092",
         "spring.kafka.listener.auto-startup=false",
-        "spring.flyway.enabled=false"
+        "spring.flyway.enabled=false",
+        "management.server.port=0"
 })
 class OrderServiceApplicationTests {
 

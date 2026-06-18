@@ -8,7 +8,8 @@ import org.springframework.test.context.TestPropertySource;
 @TestPropertySource(properties = {
         "jwt.secret=test-secret-key-that-is-long-enough-for-hmac",
         "spring.cloud.gateway.enabled=false",
-        "spring.cloud.compatibility-verifier.enabled=false"
+        "spring.cloud.compatibility-verifier.enabled=false",
+        "management.server.port=0"
 })
 class ApiGatewayApplicationTests {
 

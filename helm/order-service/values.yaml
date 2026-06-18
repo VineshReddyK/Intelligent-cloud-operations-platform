@@ -23,22 +23,26 @@ autoscaling:
   maxReplicas: 5
   targetCPUUtilizationPercentage: 70
 
+# Non-sensitive configuration
 env:
   SPRING_DATASOURCE_URL: ""
   SPRING_DATASOURCE_USERNAME: "icop"
-  SPRING_DATASOURCE_PASSWORD: ""
   SPRING_KAFKA_BOOTSTRAP_SERVERS: ""
+
+# Sensitive values — set at deploy time via: --set sensitiveEnv.SPRING_DATASOURCE_PASSWORD=<value>
+sensitiveEnv:
+  SPRING_DATASOURCE_PASSWORD: ""
 
 livenessProbe:
   httpGet:
     path: /actuator/health/liveness
-    port: 8082
+    port: management
   initialDelaySeconds: 60
   periodSeconds: 30
 
 readinessProbe:
   httpGet:
     path: /actuator/health/readiness
-    port: 8082
+    port: management
   initialDelaySeconds: 30
   periodSeconds: 10

@@ -17,6 +17,8 @@ env:
   OTEL_EXPORTER_OTLP_ENDPOINT: http://icop-otel-collector:4318
   RECONCILE_INTERVAL_MS: "30000"
 
+sensitiveEnv: {}
+
 resources:
   requests:
     cpu: 100m
@@ -31,13 +33,13 @@ autoscaling:
 livenessProbe:
   httpGet:
     path: /actuator/health/liveness
-    port: 8086
+    port: management
   initialDelaySeconds: 30
   periodSeconds: 30
 
 readinessProbe:
   httpGet:
     path: /actuator/health/readiness
-    port: 8086
+    port: management
   initialDelaySeconds: 30
   periodSeconds: 10

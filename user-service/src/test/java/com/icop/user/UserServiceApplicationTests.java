@@ -14,7 +14,8 @@ import org.springframework.test.context.TestPropertySource;
         "spring.kafka.listener.auto-startup=false",
         "jwt.secret=test-secret-key-that-is-long-enough-for-hmac",
         "jwt.expiration=86400000",
-        "spring.flyway.enabled=false"
+        "spring.flyway.enabled=false",
+        "management.server.port=0"
 })
 class UserServiceApplicationTests {
 

@@ -50,6 +50,8 @@ jwt:
   secret: ${JWT_SECRET}
 
 management:
+  server:
+    port: ${MANAGEMENT_PORT:9090}
   endpoints:
     web:
       exposure:

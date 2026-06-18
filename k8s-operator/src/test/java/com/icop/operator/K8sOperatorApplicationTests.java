@@ -10,7 +10,8 @@ import org.springframework.test.context.TestPropertySource;
 @SpringBootTest
 @ActiveProfiles("test")
 @TestPropertySource(properties = {
-        "operator.reconcile-interval-ms=999999999"
+        "operator.reconcile-interval-ms=999999999",
+        "management.server.port=0"
 })
 class K8sOperatorApplicationTests {
 
