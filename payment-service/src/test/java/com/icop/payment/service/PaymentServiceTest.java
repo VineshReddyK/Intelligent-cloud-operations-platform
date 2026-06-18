@@ -52,4 +52,27 @@ class PaymentServiceTest {
 
         assertThrows(IllegalStateException.class, () -> paymentService.processPayment(request));
     }
+
+    @Test
+    void processPayment_shouldFailForAmountOver10000() {
+        UUID orderId = UUID.randomUUID();
+        PaymentRequest request = new PaymentRequest(orderId, UUID.randomUUID(), BigDecimal.valueOf(15000));
+
+        when(paymentRepository.findByOrderId(orderId)).thenReturn(Optional.empty());
+        when(paymentRepository.save(any(Payment.class))).thenAnswer(inv -> inv.getArgument(0));
+        doNothing().when(eventProducer).publishPaymentEvent(any());
+
+        PaymentResponse response = paymentService.processPayment(request);
+
+        assertEquals(PaymentStatus.FAILED, response.status());
+        assertEquals("Insufficient funds", response.failureReason());
+    }
+
+    @Test
+    void getPaymentByOrderId_throwsWhenNotFound() {
+        UUID orderId = UUID.randomUUID();
+        when(paymentRepository.findByOrderId(orderId)).thenReturn(Optional.empty());
+
+        assertThrows(RuntimeException.class, () -> paymentService.getPaymentByOrderId(orderId));
+    }
 }

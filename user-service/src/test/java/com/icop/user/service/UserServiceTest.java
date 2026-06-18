@@ -1,6 +1,7 @@
 package com.icop.user.service;
 
 import com.icop.user.dto.RegisterRequest;
+import com.icop.user.dto.UserResponse;
 import com.icop.user.entity.User;
 import com.icop.user.repository.UserRepository;
 import com.icop.user.security.JwtUtil;
@@ -13,6 +14,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -56,5 +62,30 @@ class UserServiceTest {
         assertEquals("mock-jwt-token", response.token());
         assertEquals("john@example.com", response.email());
         assertEquals("John", response.firstName());
+    }
+
+    @Test
+    void getUserById_returnsCorrectUserResponse() {
+        UUID id = UUID.randomUUID();
+        User user = new User();
+        user.setEmail("jane@example.com");
+        user.setFirstName("Jane");
+        user.setLastName("Doe");
+        when(userRepository.findById(id)).thenReturn(Optional.of(user));
+
+        UserResponse response = userService.getUserById(id);
+
+        assertThat(response.email()).isEqualTo("jane@example.com");
+        assertThat(response.firstName()).isEqualTo("Jane");
+    }
+
+    @Test
+    void getUserById_throwsWhenUserNotFound() {
+        UUID id = UUID.randomUUID();
+        when(userRepository.findById(id)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userService.getUserById(id))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining(id.toString());
     }
 }
