@@ -1,0 +1,5 @@
+package com.icop.order.entity;
+
+public enum OrderStatus {
+    PENDING, CONFIRMED, PAYMENT_PROCESSING, PAYMENT_SUCCESS, PAYMENT_FAILED, CANCELLED, SHIPPED, DELIVERED
+}
