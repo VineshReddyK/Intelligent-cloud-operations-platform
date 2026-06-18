@@ -1,0 +1,128 @@
+kubePrometheusStack:
+  enabled: true
+  grafana:
+    enabled: true
+    adminPassword: icop_grafana
+    sidecar:
+      dashboards:
+        enabled: true
+        label: grafana_dashboard
+      datasources:
+        enabled: true
+        label: grafana_datasource
+    additionalDataSources:
+      - name: Loki
+        type: loki
+        uid: loki
+        url: http://{{ .Release.Name }}-loki:3100
+        access: proxy
+      - name: Tempo
+        type: tempo
+        uid: tempo
+        url: http://{{ .Release.Name }}-tempo:3100
+        access: proxy
+    ingress:
+      enabled: false
+  prometheus:
+    prometheusSpec:
+      retention: 7d
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            accessModes: [ReadWriteOnce]
+            resources:
+              requests:
+                storage: 10Gi
+      additionalScrapeConfigs:
+        - job_name: icop-api-gateway
+          metrics_path: /actuator/prometheus
+          static_configs:
+            - targets: ["api-gateway:8080"]
+        - job_name: icop-user-service
+          metrics_path: /actuator/prometheus
+          static_configs:
+            - targets: ["user-service:8081"]
+        - job_name: icop-order-service
+          metrics_path: /actuator/prometheus
+          static_configs:
+            - targets: ["order-service:8082"]
+        - job_name: icop-payment-service
+          metrics_path: /actuator/prometheus
+          static_configs:
+            - targets: ["payment-service:8083"]
+        - job_name: icop-notification-service
+          metrics_path: /actuator/prometheus
+          static_configs:
+            - targets: ["notification-service:8084"]
+
+loki:
+  enabled: true
+  loki:
+    auth_enabled: false
+    storage:
+      type: filesystem
+    commonConfig:
+      replication_factor: 1
+    schemaConfig:
+      configs:
+        - from: "2024-01-01"
+          store: tsdb
+          object_store: filesystem
+          schema: v13
+          index:
+            prefix: index_
+            period: 24h
+  singleBinary:
+    replicas: 1
+    persistence:
+      enabled: true
+      size: 10Gi
+
+tempo:
+  enabled: true
+  tempo:
+    retention: 24h
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: "0.0.0.0:4317"
+          http:
+            endpoint: "0.0.0.0:4318"
+    storage:
+      trace:
+        backend: local
+        local:
+          path: /var/tempo/traces
+        wal:
+          path: /var/tempo/wal
+
+opentelemetryCollector:
+  enabled: true
+  mode: deployment
+  config:
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+    processors:
+      batch:
+        timeout: 1s
+        send_batch_size: 1024
+      memory_limiter:
+        check_interval: 1s
+        limit_mib: 256
+    exporters:
+      otlp:
+        endpoint: "{{ .Release.Name }}-tempo:4317"
+        tls:
+          insecure: true
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [memory_limiter, batch]
+          exporters: [otlp]
