@@ -24,6 +24,7 @@
         <module>order-service</module>
         <module>payment-service</module>
         <module>notification-service</module>
+        <module>ai-service</module>
     </modules>
 
     <properties>
@@ -34,6 +35,8 @@
         <resilience4j.version>2.3.0</resilience4j.version>
         <testcontainers.version>1.20.6</testcontainers.version>
         <logstash-logback.version>8.0</logstash-logback.version>
+        <djl.version>0.31.0</djl.version>
+        <pytorch-native.version>2.5.1</pytorch-native.version>
     </properties>
 
     <dependencyManagement>
@@ -83,6 +86,21 @@
                 <groupId>net.logstash.logback</groupId>
                 <artifactId>logstash-logback-encoder</artifactId>
                 <version>${logstash-logback.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>ai.djl</groupId>
+                <artifactId>api</artifactId>
+                <version>${djl.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>ai.djl.pytorch</groupId>
+                <artifactId>pytorch-engine</artifactId>
+                <version>${djl.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>ai.djl.pytorch</groupId>
+                <artifactId>pytorch-native-auto</artifactId>
+                <version>${pytorch-native.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
