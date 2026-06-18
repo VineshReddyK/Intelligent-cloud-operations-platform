@@ -2,6 +2,7 @@ version: '3.9'
 
 services:
 
+  # ── Infrastructure ────────────────────────────────────────────────────────
   postgres:
     image: postgres:16
     container_name: icop-postgres
@@ -58,6 +59,7 @@ services:
       timeout: 10s
       retries: 5
 
+  # ── Microservices ─────────────────────────────────────────────────────────
   api-gateway:
     build:
       context: .
@@ -71,10 +73,12 @@ services:
       ORDER_SERVICE_URL: http://order-service:8082
       PAYMENT_SERVICE_URL: http://payment-service:8083
       JWT_SECRET: ${JWT_SECRET:-icop-super-secret-jwt-key-256-bits-minimum}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
     depends_on:
       - user-service
       - order-service
       - payment-service
+      - otel-collector
     networks:
       - icop-network
 
@@ -93,6 +97,7 @@ services:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       JWT_SECRET: ${JWT_SECRET:-icop-super-secret-jwt-key-256-bits-minimum}
       JWT_EXPIRATION: 86400000
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
     depends_on:
       postgres:
         condition: service_healthy
@@ -115,6 +120,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: icop_secret
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       JWT_SECRET: ${JWT_SECRET:-icop-super-secret-jwt-key-256-bits-minimum}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
     depends_on:
       postgres:
         condition: service_healthy
@@ -137,6 +143,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: icop_secret
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       JWT_SECRET: ${JWT_SECRET:-icop-super-secret-jwt-key-256-bits-minimum}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
     depends_on:
       postgres:
         condition: service_healthy
@@ -155,9 +162,99 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: docker
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
     depends_on:
       kafka:
         condition: service_healthy
+    networks:
+      - icop-network
+
+  # ── Observability Stack ───────────────────────────────────────────────────
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.120.0
+    container_name: icop-otel-collector
+    command: ["--config=/etc/otel-collector-config.yml"]
+    volumes:
+      - ./observability/otel-collector/otel-collector-config.yml:/etc/otel-collector-config.yml
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+    depends_on:
+      - tempo
+    networks:
+      - icop-network
+
+  prometheus:
+    image: prom/prometheus:v3.2.1
+    container_name: icop-prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=7d"
+      - "--web.enable-lifecycle"
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - icop-network
+
+  grafana:
+    image: grafana/grafana:11.5.2
+    container_name: icop-grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: icop_grafana
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_FEATURE_TOGGLES_ENABLE: traceqlEditor
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+      - loki
+      - tempo
+    networks:
+      - icop-network
+
+  loki:
+    image: grafana/loki:3.4.2
+    container_name: icop-loki
+    command: -config.file=/etc/loki/local-config.yaml
+    ports:
+      - "3100:3100"
+    volumes:
+      - loki-data:/loki
+    networks:
+      - icop-network
+
+  promtail:
+    image: grafana/promtail:3.4.2
+    container_name: icop-promtail
+    command: -config.file=/etc/promtail/config.yml
+    volumes:
+      - ./observability/promtail/promtail-config.yml:/etc/promtail/config.yml
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - loki
+    networks:
+      - icop-network
+
+  tempo:
+    image: grafana/tempo:2.7.2
+    container_name: icop-tempo
+    command: ["-config.file=/etc/tempo.yml"]
+    volumes:
+      - ./observability/tempo/tempo.yml:/etc/tempo.yml
+      - tempo-data:/tmp/tempo
+    ports:
+      - "3200:3200"
+      - "4317"
     networks:
       - icop-network
 
@@ -167,3 +264,7 @@ networks:
 
 volumes:
   postgres-data:
+  prometheus-data:
+  grafana-data:
+  loki-data:
+  tempo-data:
