@@ -193,6 +193,22 @@ GET  /api/payments/order/{id}   — Get payment by order
 
 ---
 
+## Future Enhancements
+
+| Enhancement | Description | Est. Time |
+|---|---|---|
+| **GitHub Actions CI matrix build** | Add parallel CI matrix that builds + tests all 6 microservices (user, order, payment, notification, ai, k8s-operator) with Docker push on main | 2.5 hrs |
+| **Architecture diagram** | Add a visual service map (Mermaid or draw.io) showing gateway → services → Kafka → DBs + the full observability stack — currently only ASCII art exists | 1 hr |
+| **Dependabot (Maven + Docker + Actions)** | Single `.github/dependabot.yml` covering all three ecosystems across all services | 15 min |
+| **Helm chart quickstart** | Add one-liner `helm install` command to README with all required values documented | 30 min |
+| **GitHub repository topics** | Set topics: `java`, `spring-boot`, `microservices`, `kafka`, `kubernetes`, `ai`, `anomaly-detection`, `opentelemetry`, `grafana`, `helm` | 5 min |
+| **SECURITY.md + issue/PR templates** | Add vulnerability disclosure policy, bug report template, feature request template, and PR checklist | 30 min |
+| **Performance benchmarks** | Document end-to-end order→payment latency, Kafka throughput (msgs/sec), AI anomaly detection inference time | 45 min |
+| **Cost estimate for AWS EKS** | Add a table of estimated monthly AWS costs for running the full platform (EKS nodes, RDS, MSK, etc.) | 30 min |
+| **Flyway/Liquibase for DB migrations** | Add schema versioning to all three databases — currently there is no migration strategy documented | 2 hrs |
+
+---
+
 ## Author
 
 **Vinesh Reddy Kankanalapally**
