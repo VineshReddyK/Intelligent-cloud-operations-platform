@@ -300,14 +300,7 @@ Estimated monthly cost for running the full ICOP platform on AWS EKS in `us-east
 | **Phase 3** | ✅ Complete | Prometheus + Grafana + Loki + Tempo + OTel tracing |
 | **Phase 4** | ✅ Complete | AI anomaly detection + failure prediction (DJL + PyTorch NDArray) |
 | **Phase 5** | ✅ Complete | Kubernetes Operator + IntelligentScalingPolicy CRD + Fabric8 + AI auto-scaling |
-
----
-
-## Future Enhancements
-
-| Enhancement | Description |
-|---|---|
-| **Flyway/Liquibase for DB migrations** | Add schema versioning to all three databases (user_db, order_db, payment_db) — currently schema is managed by Hibernate `ddl-auto=update` |
+| **Phase 6** | ✅ Complete | Flyway schema versioning — all three databases use `V1__initial_schema.sql`, `ddl-auto=validate` |
 
 ---
 
