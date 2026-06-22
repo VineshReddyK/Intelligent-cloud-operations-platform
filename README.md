@@ -1,6 +1,7 @@
 # Intelligent Cloud Operations Platform (ICOP)
 
 ![CI](https://github.com/VineshReddyK/Intelligent-cloud-operations-platform/actions/workflows/ci.yml/badge.svg)
+![CodeQL](https://github.com/VineshReddyK/Intelligent-cloud-operations-platform/actions/workflows/codeql.yml/badge.svg)
 ![Java](https://img.shields.io/badge/Java-21-orange)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.0-green)
 ![Kafka](https://img.shields.io/badge/Apache%20Kafka-3.9.0-black)
