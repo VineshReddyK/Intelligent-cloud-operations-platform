@@ -27,7 +27,7 @@ jobs:
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-results
           path: '**/target/surefire-reports/*.xml'
@@ -35,7 +35,7 @@ jobs:
 
       - name: Upload JaCoCo coverage reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-reports
           path: '**/target/site/jacoco/'
@@ -72,7 +72,7 @@ jobs:
 
       - name: Upload OWASP report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: owasp-dependency-report
           path: target/dependency-check-report.html
