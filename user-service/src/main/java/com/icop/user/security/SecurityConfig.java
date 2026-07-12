@@ -15,6 +15,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+/**
+ * Security wiring for the user service. The rule of thumb: auth endpoints,
+ * swagger, and actuator are open; everything else needs a valid JWT.
+ */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -30,20 +34,24 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationProvider authenticationProvider) throws Exception {
         return http
+                // CSRF protection is for cookie/session auth — with stateless
+                // bearer tokens it only gets in the way
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/api/auth/**",
-                                "/swagger-ui/**",
+                                "/api/auth/**",      // register + login have to be reachable
+                                "/swagger-ui/**",    // api docs
                                 "/v3/api-docs/**",
-                                "/actuator/**"
+                                "/actuator/**"       // health/metrics for k8s probes + prometheus
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
+                // no server-side sessions — every request carries its own token
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authenticationProvider(authenticationProvider)
+                // our JWT filter has to run before the username/password one
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
@@ -58,6 +66,8 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        // just exposes Spring's own auth manager as a bean so UserService can
+        // trigger the credential check during login
         return config.getAuthenticationManager();
     }
 }
