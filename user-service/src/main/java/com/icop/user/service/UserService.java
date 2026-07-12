@@ -19,6 +19,11 @@ import org.springframework.stereotype.Service;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Registration, login, and user lookups. Doubles as the UserDetailsService
+ * so Spring Security loads users straight from our repository instead of
+ * needing a separate adapter class.
+ */
 @Service
 public class UserService implements UserDetailsService {
 
@@ -27,6 +32,9 @@ public class UserService implements UserDetailsService {
     private final JwtUtil jwtUtil;
     private final AuthenticationManager authenticationManager;
 
+    // @Lazy on the AuthenticationManager breaks the circular dependency:
+    // SecurityConfig needs this service (as UserDetailsService) while this
+    // service needs the auth manager that SecurityConfig produces.
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder,
                        JwtUtil jwtUtil, @Lazy AuthenticationManager authenticationManager) {
         this.userRepository = userRepository;
@@ -36,6 +44,7 @@ public class UserService implements UserDetailsService {
     }
 
     public AuthResponse register(RegisterRequest request) {
+        // fail fast on duplicate emails — nicer error than a DB constraint blowup
         if (userRepository.existsByEmail(request.email())) {
             throw new IllegalArgumentException("Email already registered: " + request.email());
         }
@@ -48,11 +57,15 @@ public class UserService implements UserDetailsService {
 
         userRepository.save(user);
 
+        // hand back a token right away so the client doesn't need a second
+        // login round-trip after registering
         String token = jwtUtil.generateToken(user, Map.of("role", user.getRole().name()));
         return new AuthResponse(token, user.getEmail(), user.getFirstName(), user.getLastName(), user.getRole().name());
     }
 
     public AuthResponse login(LoginRequest request) {
+        // let Spring Security do the credential check — throws if they're wrong,
+        // so anything past this line is an authenticated user
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.email(), request.password())
         );
@@ -72,11 +85,13 @@ public class UserService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        // email is our username — there's no separate handle
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
     }
 
     private UserResponse toResponse(User user) {
+        // never leak the entity (and its password hash) out of the service layer
         return new UserResponse(
                 user.getId(), user.getEmail(),
                 user.getFirstName(), user.getLastName(),
