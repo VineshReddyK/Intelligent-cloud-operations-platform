@@ -11,6 +11,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
+/**
+ * Authenticated user lookups. The @SecurityRequirement annotation is just for
+ * swagger — it puts the padlock icon on these endpoints so the docs make it
+ * obvious a token is required. The actual enforcement lives in SecurityConfig.
+ */
 @RestController
 @RequestMapping("/api/users")
 @Tag(name = "Users", description = "User management endpoints")
