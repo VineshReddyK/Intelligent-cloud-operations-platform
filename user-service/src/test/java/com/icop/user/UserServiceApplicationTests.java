@@ -4,6 +4,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 
+/**
+ * The classic context-loads smoke test. Worth more than it looks — it catches
+ * broken bean wiring, bad config keys, and missing properties at build time.
+ * The overrides below swap real infra for test stand-ins: H2 instead of
+ * Postgres, Kafka listeners parked, Flyway off since H2 gets create-drop.
+ */
 @SpringBootTest
 @TestPropertySource(properties = {
         "spring.datasource.url=jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1",
