@@ -23,6 +23,10 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+/**
+ * Pure unit tests — everything around UserService is mocked, so these run in
+ * milliseconds with no Spring context, no DB, no Kafka.
+ */
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
 
@@ -46,6 +50,7 @@ class UserServiceTest {
         when(userRepository.existsByEmail("john@example.com")).thenReturn(true);
 
         assertThrows(IllegalArgumentException.class, () -> userService.register(registerRequest));
+        // the important half of the assertion: nothing got persisted
         verify(userRepository, never()).save(any());
     }
 
@@ -53,6 +58,7 @@ class UserServiceTest {
     void register_shouldCreateUserSuccessfully() {
         when(userRepository.existsByEmail("john@example.com")).thenReturn(false);
         when(passwordEncoder.encode("password123")).thenReturn("encoded-password");
+        // echo the saved entity back, like the real repository would
         when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
         when(jwtUtil.generateToken(any(), anyMap())).thenReturn("mock-jwt-token");
 
@@ -84,6 +90,7 @@ class UserServiceTest {
         UUID id = UUID.randomUUID();
         when(userRepository.findById(id)).thenReturn(Optional.empty());
 
+        // the id should appear in the message — that's what makes the log useful
         assertThatThrownBy(() -> userService.getUserById(id))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining(id.toString());
