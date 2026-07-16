@@ -5,6 +5,11 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+/**
+ * The order row. userId is just a UUID, not a foreign key — users live in a
+ * different service with a different database, so referential integrity
+ * across that boundary is handled by events, not constraints.
+ */
 @Entity
 @Table(name = "orders")
 public class Order {
@@ -22,6 +27,8 @@ public class Order {
     @Column(nullable = false)
     private Integer quantity;
 
+    // BigDecimal with explicit precision — money in a double is how you end
+    // up explaining rounding errors to an accountant
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount;
 
@@ -34,6 +41,7 @@ public class Order {
 
     private LocalDateTime updatedAt;
 
+    // timestamps are managed here, not by callers — one less thing to forget
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
