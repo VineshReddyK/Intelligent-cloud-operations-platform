@@ -6,6 +6,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
+/**
+ * Fire-and-forget publisher for order events. Failures get logged, not
+ * rethrown — an order shouldn't fail to save just because Kafka hiccuped.
+ * (The tradeoff: a dropped event. An outbox pattern would close that gap
+ * if this ever handles real money.)
+ */
 @Component
 public class OrderEventProducer {
 
@@ -20,6 +26,8 @@ public class OrderEventProducer {
 
     public void publishOrderEvent(OrderEvent event) {
         log.info("Publishing order event: {} for order: {}", event.eventType(), event.orderId());
+        // keyed by order id so all events for one order land on the same
+        // partition — consumers see them in order
         kafkaTemplate.send(ORDER_TOPIC, event.orderId().toString(), event)
                 .whenComplete((result, ex) -> {
                     if (ex != null) {
