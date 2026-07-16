@@ -19,6 +19,10 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+/**
+ * Unit tests with the repository and producer mocked out — the two behaviors
+ * that matter most: creating publishes an event, cancelling respects state.
+ */
 @ExtendWith(MockitoExtension.class)
 class OrderServiceTest {
 
@@ -40,12 +44,14 @@ class OrderServiceTest {
         doNothing().when(eventProducer).publishOrderEvent(any());
 
         assertDoesNotThrow(() -> orderService.createOrder(request));
+        // both halves have to happen: the row AND the event
         verify(orderRepository).save(any(Order.class));
         verify(eventProducer).publishOrderEvent(any());
     }
 
     @Test
     void cancelOrder_shouldThrowIfNotPending() {
+        // CONFIRMED means payment already started — cancel must be refused
         UUID orderId = UUID.randomUUID();
         Order order = new Order();
         order.setStatus(OrderStatus.CONFIRMED);
