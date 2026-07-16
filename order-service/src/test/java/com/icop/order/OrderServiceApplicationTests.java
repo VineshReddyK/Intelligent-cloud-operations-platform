@@ -4,6 +4,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 
+/**
+ * Context-loads smoke test with real infra swapped for stand-ins:
+ * H2 instead of Postgres, Kafka listeners parked, Flyway off.
+ * Catches wiring and config mistakes at build time — cheap insurance.
+ */
 @SpringBootTest
 @TestPropertySource(properties = {
         "spring.datasource.url=jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1",
