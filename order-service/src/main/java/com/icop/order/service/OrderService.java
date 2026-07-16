@@ -14,6 +14,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Order lifecycle: create, look up, cancel. Every state change also goes out
+ * on Kafka so payment-service and notification-service can react without us
+ * calling them — that's the whole event-driven point of the platform.
+ */
 @Service
 public class OrderService {
 
@@ -32,10 +37,12 @@ public class OrderService {
         order.setProductName(request.productName());
         order.setQuantity(request.quantity());
         order.setTotalAmount(request.totalAmount());
+        // everything starts PENDING — payment-service moves it along from there
         order.setStatus(OrderStatus.PENDING);
 
         Order saved = orderRepository.save(order);
 
+        // publish after save so the event carries the generated id
         eventProducer.publishOrderEvent(new OrderEvent(
                 "ORDER_CREATED", saved.getId(), saved.getUserId(),
                 saved.getProductName(), saved.getQuantity(),
@@ -53,6 +60,7 @@ public class OrderService {
     }
 
     public List<OrderResponse> getOrdersByUser(UUID userId) {
+        // newest first — that's what every order-history screen wants
         return orderRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
                 .map(this::toResponse)
                 .toList();
@@ -63,6 +71,8 @@ public class OrderService {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Order not found: " + id));
 
+        // once payment is in flight it's too late to just flip a flag —
+        // that would need a refund flow, which is a different feature
         if (order.getStatus() != OrderStatus.PENDING) {
             throw new IllegalStateException("Only PENDING orders can be cancelled");
         }
@@ -80,6 +90,8 @@ public class OrderService {
         return toResponse(saved);
     }
 
+    // called by the payment-events listener — deliberately quiet if the order
+    // is gone, since a missing order isn't the listener's problem to solve
     @Transactional
     public void updateOrderStatus(UUID orderId, OrderStatus newStatus) {
         orderRepository.findById(orderId).ifPresent(order -> {
