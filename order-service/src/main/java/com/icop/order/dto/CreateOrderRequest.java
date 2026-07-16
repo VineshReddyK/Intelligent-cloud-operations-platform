@@ -8,6 +8,8 @@ import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.UUID;
 
+// everything required, nothing optional — an order with a missing amount or
+// zero quantity is garbage data, better rejected at the door
 public record CreateOrderRequest(
         @NotNull(message = "User ID is required") UUID userId,
         @NotBlank(message = "Product name is required") String productName,
