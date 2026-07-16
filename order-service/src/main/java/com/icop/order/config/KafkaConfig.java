@@ -13,6 +13,12 @@ import org.springframework.kafka.support.serializer.JsonSerializer;
 
 import java.util.Map;
 
+/**
+ * Producer wiring: string keys (the order id), JSON-serialized OrderEvent
+ * values. Type headers are switched off so consumers deserialize by their
+ * own target type instead of needing our class on their classpath — the
+ * services stay decoupled at the schema level too.
+ */
 @Configuration
 public class KafkaConfig {
 
