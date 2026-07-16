@@ -13,6 +13,10 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * REST surface for orders — thin by design, all the rules live in
+ * OrderService. Auth happens at the api-gateway before requests get here.
+ */
 @RestController
 @RequestMapping("/api/orders")
 @Tag(name = "Orders", description = "Order lifecycle management")
@@ -42,6 +46,8 @@ public class OrderController {
         return ResponseEntity.ok(orderService.getOrdersByUser(userId));
     }
 
+    // PUT on a sub-resource rather than DELETE — cancelling is a state
+    // transition, the order itself sticks around
     @PutMapping("/{id}/cancel")
     @Operation(summary = "Cancel an order")
     public ResponseEntity<OrderResponse> cancelOrder(@PathVariable UUID id) {
