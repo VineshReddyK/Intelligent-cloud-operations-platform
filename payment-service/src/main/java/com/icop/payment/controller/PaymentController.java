@@ -12,6 +12,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
+/**
+ * REST surface for payments. In the normal flow payments start from Kafka
+ * (see OrderEventConsumer) — the POST here exists for manual retries and
+ * for exercising the circuit breaker directly in demos.
+ */
 @RestController
 @RequestMapping("/api/payments")
 @Tag(name = "Payments", description = "Payment processing with circuit breaker")
@@ -35,6 +40,7 @@ public class PaymentController {
         return ResponseEntity.ok(paymentService.getPaymentById(id));
     }
 
+    // the lookup clients actually use — you usually know the order, not the payment id
     @GetMapping("/order/{orderId}")
     @Operation(summary = "Get payment by order ID")
     public ResponseEntity<PaymentResponse> getPaymentByOrder(@PathVariable UUID orderId) {
