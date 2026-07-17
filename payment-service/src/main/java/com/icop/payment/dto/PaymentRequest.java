@@ -6,6 +6,8 @@ import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.UUID;
 
+// used by both entry points — the REST endpoint and the kafka consumer build
+// the same request, so validation rules only live in one place
 public record PaymentRequest(
         @NotNull(message = "Order ID is required") UUID orderId,
         @NotNull(message = "User ID is required") UUID userId,
