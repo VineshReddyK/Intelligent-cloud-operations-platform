@@ -8,6 +8,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.stream.Collectors;
 
+/**
+ * Exceptions → RFC 7807 problem responses, matching the other services.
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -21,6 +24,7 @@ public class GlobalExceptionHandler {
         return pd;
     }
 
+    // the duplicate-payment case — 409, the order already has one
     @ExceptionHandler(IllegalStateException.class)
     public ProblemDetail handleIllegalState(IllegalStateException ex) {
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
