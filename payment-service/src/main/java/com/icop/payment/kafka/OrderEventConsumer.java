@@ -11,6 +11,14 @@ import java.math.BigDecimal;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * The other half of the order → payment choreography: order-service publishes
+ * ORDER_CREATED, we pick it up here and kick off payment automatically.
+ * No REST call between the two services anywhere.
+ *
+ * Events arrive as a plain Map (see KafkaConfig) so we're not coupled to
+ * order-service's event class — just its JSON field names.
+ */
 @Component
 public class OrderEventConsumer {
 
@@ -26,6 +34,7 @@ public class OrderEventConsumer {
     public void handleOrderEvent(Map<String, Object> event) {
         String eventType = (String) event.get("eventType");
 
+        // the topic carries the whole order lifecycle; only creation starts a payment
         if ("ORDER_CREATED".equals(eventType)) {
             log.info("Received ORDER_CREATED event, initiating payment processing");
             try {
@@ -35,6 +44,8 @@ public class OrderEventConsumer {
 
                 paymentService.processPayment(new PaymentRequest(orderId, userId, amount));
             } catch (Exception e) {
+                // swallow rather than rethrow — an endless redelivery loop on a
+                // poison message would be worse than one lost payment attempt
                 log.error("Error processing ORDER_CREATED event: {}", e.getMessage());
             }
         }
