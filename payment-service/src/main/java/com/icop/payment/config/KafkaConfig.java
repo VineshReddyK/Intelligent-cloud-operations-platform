@@ -15,6 +15,12 @@ import org.springframework.kafka.support.serializer.JsonSerializer;
 
 import java.util.Map;
 
+/**
+ * This service sits on both sides of Kafka: produces PaymentEvents out to
+ * payment.events, consumes order events in from order.events. Incoming
+ * messages deserialize to a plain Map — deliberately schema-loose, so
+ * order-service can evolve its event class without breaking us.
+ */
 @Configuration
 public class KafkaConfig {
 
@@ -27,6 +33,7 @@ public class KafkaConfig {
                 ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers,
                 ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class,
                 ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class,
+                // no type headers — consumers pick their own target type
                 JsonSerializer.ADD_TYPE_INFO_HEADERS, false
         ));
     }
