@@ -5,6 +5,10 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+/**
+ * One row per payment attempt's final state. orderId is unique — the schema
+ * itself enforces "one payment per order", not just the service code.
+ */
 @Entity
 @Table(name = "payments")
 public class Payment {
@@ -19,6 +23,7 @@ public class Payment {
     @Column(nullable = false)
     private UUID userId;
 
+    // BigDecimal, fixed precision — money never touches floating point
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal amount;
 
@@ -26,11 +31,14 @@ public class Payment {
     @Column(nullable = false)
     private PaymentStatus status = PaymentStatus.PENDING;
 
+    // only set on failures; null means it went through
     private String failureReason;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    // createdAt = row insert, processedAt = gateway decision — usually the
+    // same instant here, but a real async gateway would separate them
     private LocalDateTime processedAt;
 
     @PrePersist
