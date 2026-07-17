@@ -20,6 +20,11 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+/**
+ * Unit tests around the payment rules. The 10k threshold cases pin down the
+ * simulated gateway's behavior on both sides of the line, and the duplicate
+ * check gets its own test since it guards real money invariants.
+ */
 @ExtendWith(MockitoExtension.class)
 class PaymentServiceTest {
 
@@ -45,6 +50,8 @@ class PaymentServiceTest {
 
     @Test
     void processPayment_shouldFailForDuplicateOrder() {
+        // second payment for the same order must be rejected before any
+        // gateway call happens
         UUID orderId = UUID.randomUUID();
         PaymentRequest request = new PaymentRequest(orderId, UUID.randomUUID(), BigDecimal.valueOf(100));
 
@@ -64,6 +71,7 @@ class PaymentServiceTest {
 
         PaymentResponse response = paymentService.processPayment(request);
 
+        // a decline is still a persisted, well-formed response — not an exception
         assertEquals(PaymentStatus.FAILED, response.status());
         assertEquals("Insufficient funds", response.failureReason());
     }
