@@ -16,6 +16,12 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+/**
+ * Payment processing behind a resilience4j circuit breaker. When the
+ * (simulated) gateway starts failing repeatedly, the breaker opens and
+ * requests short-circuit to the fallback instead of piling up threads
+ * against a dead dependency — fail fast, recover gracefully.
+ */
 @Service
 public class PaymentService {
 
@@ -32,6 +38,8 @@ public class PaymentService {
     @Transactional
     @CircuitBreaker(name = "payment-processor", fallbackMethod = "paymentFallback")
     public PaymentResponse processPayment(PaymentRequest request) {
+        // one payment per order, ever. the unique constraint on orderId backs
+        // this up at the DB level, but checking first gives a better error
         if (paymentRepository.findByOrderId(request.orderId()).isPresent()) {
             throw new IllegalStateException("Payment already exists for order: " + request.orderId());
         }
@@ -48,6 +56,7 @@ public class PaymentService {
             payment.setProcessedAt(LocalDateTime.now());
             Payment saved = paymentRepository.save(payment);
 
+            // order-service listens for this and flips the order status
             eventProducer.publishPaymentEvent(new PaymentEvent(
                     "PAYMENT_SUCCESS", saved.getId(), saved.getOrderId(),
                     saved.getUserId(), saved.getAmount(), "SUCCESS", null, LocalDateTime.now()
@@ -56,6 +65,8 @@ public class PaymentService {
             log.info("Payment successful for order: {}", request.orderId());
             return toResponse(saved);
         } else {
+            // failed payments get persisted too — the audit trail matters as
+            // much for declines as for successes
             payment.setStatus(PaymentStatus.FAILED);
             payment.setFailureReason("Insufficient funds");
             payment.setProcessedAt(LocalDateTime.now());
@@ -71,6 +82,8 @@ public class PaymentService {
         }
     }
 
+    // circuit-breaker fallback — same signature plus the exception, per
+    // resilience4j's contract. records the failure so nothing goes missing
     public PaymentResponse paymentFallback(PaymentRequest request, Exception ex) {
         log.error("Payment circuit breaker triggered for order: {}. Reason: {}", request.orderId(), ex.getMessage());
         Payment payment = new Payment();
@@ -96,6 +109,8 @@ public class PaymentService {
                 .orElseThrow(() -> new RuntimeException("Payment not found for order: " + orderId));
     }
 
+    // stand-in for a real gateway: anything under 10k clears, the rest
+    // declines. deterministic on purpose so the demo (and tests) behave
     private boolean simulatePaymentGateway(java.math.BigDecimal amount) {
         return amount.compareTo(java.math.BigDecimal.valueOf(10000)) < 0;
     }
