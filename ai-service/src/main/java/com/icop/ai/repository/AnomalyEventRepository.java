@@ -7,6 +7,8 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
+// all derived queries, all backed by the two indexes on the table.
+// count() feeds the operator's "how noisy has this service been" check
 public interface AnomalyEventRepository extends JpaRepository<AnomalyEvent, UUID> {
 
     List<AnomalyEvent> findByServiceOrderByDetectedAtDesc(String service);
