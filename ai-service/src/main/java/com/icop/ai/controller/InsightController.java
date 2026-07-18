@@ -17,6 +17,11 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Read side of the AI service — reports, anomaly history, predictions.
+ * The one write-ish endpoint (refresh) just forces an analysis cycle early
+ * instead of waiting for the scheduler.
+ */
 @RestController
 @RequestMapping("/api/insights")
 @Tag(name = "AI Insights", description = "Anomaly detection, failure prediction, and auto-remediation")
@@ -41,6 +46,7 @@ public class InsightController {
         return ResponseEntity.ok(insightService.getLatestReport());
     }
 
+    // handy in demos: change something, refresh, see the model react
     @PostMapping("/report/refresh")
     @Operation(summary = "Trigger a fresh analysis cycle immediately")
     public ResponseEntity<InsightReport> refresh() {
@@ -68,6 +74,7 @@ public class InsightController {
         return ResponseEntity.ok(report.predictions());
     }
 
+    // the at-a-glance endpoint — grafana panels and the k8s operator hit this
     @GetMapping("/health")
     @Operation(summary = "Get overall platform health status")
     public ResponseEntity<Map<String, Object>> getPlatformHealth() {
