@@ -7,6 +7,12 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
+/**
+ * Context-loads smoke test. NDManager is mocked because CI runners don't
+ * have the native PyTorch engine, and the poll interval is cranked way up
+ * so the scheduler can't fire mid-test and try to reach a prometheus
+ * that isn't there.
+ */
 @SpringBootTest
 @ActiveProfiles("test")
 @TestPropertySource(properties = {
