@@ -15,11 +15,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * Pulls the four signals the models care about — error rate, p99 latency,
+ * request rate, kafka lag — straight out of Prometheus, one snapshot per
+ * service per cycle. Prometheus already scrapes everyone, so this is much
+ * cheaper than instrumenting every service to push metrics at us.
+ */
 @Service
 public class MetricsCollectorService {
 
     private static final Logger log = LoggerFactory.getLogger(MetricsCollectorService.class);
 
+    // the fleet we watch. hardcoded is fine at this scale — service discovery
+    // would be the upgrade if the platform grew past a handful of services
     private static final Map<String, Integer> SERVICES = Map.of(
             "api-gateway", 8080,
             "user-service", 8081,
@@ -38,6 +46,8 @@ public class MetricsCollectorService {
     }
 
     public List<MetricSnapshot> collectAll() {
+        // one unreachable service shouldn't sink the whole cycle — collect
+        // what we can and move on
         List<MetricSnapshot> snapshots = new ArrayList<>();
         for (String service : SERVICES.keySet()) {
             collect(service).ifPresent(snapshots::add);
@@ -47,6 +57,8 @@ public class MetricsCollectorService {
 
     private Optional<MetricSnapshot> collect(String service) {
         try {
+            // the `or vector(0)` fallbacks matter: a service with zero traffic
+            // returns an empty result set, and we want 0.0 there, not an error
             double errorRate = queryScalar(
                     "100 * sum(rate(http_server_requests_seconds_count{service=\"" + service + "\",outcome=\"SERVER_ERROR\"}[5m]))" +
                     " / (sum(rate(http_server_requests_seconds_count{service=\"" + service + "\"}[5m])) > 0) or vector(0)");
@@ -70,6 +82,8 @@ public class MetricsCollectorService {
         }
     }
 
+    // walk prometheus's response envelope down to the single number inside.
+    // every missing layer means "no data", which for us is just 0.0
     @SuppressWarnings("unchecked")
     private double queryScalar(String promql) {
         String url = prometheusUrl + "/api/v1/query?query=" + URLEncoder.encode(promql, StandardCharsets.UTF_8);
@@ -93,6 +107,8 @@ public class MetricsCollectorService {
         }
     }
 
+    // resilience4j exports one series per breaker state with value 1 on the
+    // active one — find that series and read its label
     @SuppressWarnings("unchecked")
     private String queryCbState(String service) {
         try {
@@ -105,7 +121,7 @@ public class MetricsCollectorService {
             if (data == null) return "UNKNOWN";
 
             List<Object> result = (List<Object>) data.get("result");
-            if (result == null || result.isEmpty()) return "NONE";
+            if (result == null || result.isEmpty()) return "NONE"; // service has no breaker
 
             for (Object item : result) {
                 Map<String, Object> entry = (Map<String, Object>) item;
