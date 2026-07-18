@@ -16,6 +16,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * The conductor: collect metrics → run anomaly detection → run failure
+ * prediction → roll everything up into one InsightReport. The scheduler
+ * calls this every cycle; the REST API serves whatever the last cycle
+ * produced.
+ */
 @Service
 public class InsightService {
 
@@ -26,6 +32,8 @@ public class InsightService {
     private final FailurePredictionService failurePrediction;
     private final AnomalyEventRepository anomalyRepo;
 
+    // AtomicReference instead of a lock — readers always get a complete
+    // report, never a half-written one
     private final AtomicReference<InsightReport> latestReport = new AtomicReference<>();
 
     public InsightService(MetricsCollectorService metricsCollector,
@@ -52,7 +60,8 @@ public class InsightService {
             allAnomalies.addAll(anomalies);
             allPredictions.add(prediction);
 
-            // Persist confirmed anomalies
+            // only confirmed anomalies hit the DB — the normal readings would
+            // just be noise with an insert cost
             anomalies.stream()
                     .filter(AnomalyResult::anomaly)
                     .forEach(a -> anomalyRepo.save(
@@ -85,10 +94,12 @@ public class InsightService {
     }
 
     public InsightReport getLatestReport() {
+        // lazily run a cycle if asked before the scheduler's first pass
         InsightReport report = latestReport.get();
         return report != null ? report : runAnalysis();
     }
 
+    // worst service wins — platform health is only as good as its sickest member
     private String computeOverallHealth(List<FailurePrediction> predictions) {
         if (predictions.isEmpty()) return "UNKNOWN";
         boolean hasCritical = predictions.stream().anyMatch(p -> p.riskLevel() == RiskLevel.CRITICAL);
