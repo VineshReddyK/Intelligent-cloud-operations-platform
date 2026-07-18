@@ -14,6 +14,11 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Exercises the z-score logic through the pure-Java fallback path — mocking
+ * NDManager means the DJL call NPEs and the service drops to plain math,
+ * which conveniently also proves the fallback works.
+ */
 @ExtendWith(MockitoExtension.class)
 class AnomalyDetectionServiceTest {
 
@@ -24,13 +29,13 @@ class AnomalyDetectionServiceTest {
 
     @BeforeEach
     void setUp() {
-        // manager.create() returns null by default; the service catches the resulting
-        // NullPointerException and falls back to pure-Java z-score computation.
+        // window 60, threshold 2.5 — same defaults as production config
         service = new AnomalyDetectionService(manager, 60, 2.5);
     }
 
     @Test
     void noAnomalyWhenWindowTooSmall() {
+        // a single sample can't be anomalous — there's nothing to compare against
         MetricSnapshot snap = new MetricSnapshot("user-service", 10.0, 0.5, 100.0, 0.0, "CLOSED", Instant.now());
         List<AnomalyResult> results = service.detect(snap);
         assertThat(results).noneMatch(AnomalyResult::anomaly);
@@ -38,11 +43,11 @@ class AnomalyDetectionServiceTest {
 
     @Test
     void detectsAnomalyAfterWindowFills() {
-        // Feed 15 normal values (error_rate ~0)
+        // 15 quiet cycles to warm the window...
         for (int i = 0; i < 15; i++) {
             service.detect(new MetricSnapshot("svc", 10.0, 0.1, 50.0, 0.0, "CLOSED", Instant.now()));
         }
-        // Feed a spike (error_rate=80%) — should trigger anomaly
+        // ...then an 80% error rate walks in
         List<AnomalyResult> results = service.detect(
                 new MetricSnapshot("svc", 10.0, 80.0, 50.0, 0.0, "CLOSED", Instant.now()));
 
@@ -53,11 +58,11 @@ class AnomalyDetectionServiceTest {
 
     @Test
     void noFalsePositiveForStableMetrics() {
-        // Feed 20 identical values
+        // perfectly flat metrics must never alarm — this is the epsilon-in-
+        // the-variance case, where σ would otherwise be zero
         for (int i = 0; i < 20; i++) {
             service.detect(new MetricSnapshot("svc", 5.0, 1.0, 200.0, 10.0, "CLOSED", Instant.now()));
         }
-        // Same value again — no anomaly
         List<AnomalyResult> results = service.detect(
                 new MetricSnapshot("svc", 5.0, 1.0, 200.0, 10.0, "CLOSED", Instant.now()));
 
