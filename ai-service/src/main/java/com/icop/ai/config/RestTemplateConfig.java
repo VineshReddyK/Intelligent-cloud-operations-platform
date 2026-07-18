@@ -7,6 +7,12 @@ import org.springframework.web.client.RestTemplate;
 
 import java.time.Duration;
 
+/**
+ * RestTemplate for the prometheus queries. The timeouts are the important
+ * part — without them a hung prometheus would stall the whole analysis
+ * cycle indefinitely, and the scheduler would just quietly stop producing
+ * reports.
+ */
 @Configuration
 public class RestTemplateConfig {
 
