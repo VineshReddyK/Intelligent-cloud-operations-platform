@@ -4,6 +4,11 @@ import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * Persisted record of a confirmed anomaly — the history behind the
+ * /api/insights/anomalies endpoints. Indexed on service and detectedAt
+ * because those are exactly the two ways the API queries this table.
+ */
 @Entity
 @Table(name = "anomaly_events", indexes = {
         @Index(name = "idx_anomaly_service", columnList = "service"),
@@ -32,6 +37,7 @@ public class AnomalyEvent {
         if (detectedAt == null) detectedAt = Instant.now();
     }
 
+    // JPA wants the no-arg constructor; everyone else uses the real one
     public AnomalyEvent() {}
 
     public AnomalyEvent(String service, String metric, double currentValue, double zScore) {
@@ -41,6 +47,7 @@ public class AnomalyEvent {
         this.zScore = zScore;
     }
 
+    // read-only after creation — anomaly history shouldn't be editable
     public UUID getId() { return id; }
     public String getService() { return service; }
     public String getMetric() { return metric; }
