@@ -13,23 +13,27 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Detects metric anomalies using a sliding window Z-score model backed by
- * DJL NDArray tensor operations (PyTorch engine).
+ * Sliding-window z-score anomaly detection, with the tensor math done on
+ * DJL's PyTorch engine.
  *
- * Z-score = |x - μ| / σ  where μ and σ are computed over the last N samples.
- * A score above the configured threshold signals an anomaly.
+ * z = |x - μ| / σ over the last N samples of each metric. Above the
+ * threshold → anomaly. Simple, explainable, and it doesn't need training
+ * data — which beats a fancier model you can't explain at 3am during an
+ * incident.
  */
 @Service
 public class AnomalyDetectionService {
 
     private static final Logger log = LoggerFactory.getLogger(AnomalyDetectionService.class);
+    // below this many samples the std is basically noise, so don't even score
     private static final int MIN_WINDOW_FOR_DETECTION = 10;
 
     private final NDManager ndManager;
     private final int windowSize;
     private final double zScoreThreshold;
 
-    // key: "service:metric" → ordered ring buffer of historical values
+    // "service:metric" → ring buffer of recent values. ConcurrentHashMap since
+    // the scheduler and the REST refresh endpoint can both land here
     private final Map<String, Deque<Double>> metricWindows = new ConcurrentHashMap<>();
 
     public AnomalyDetectionService(
@@ -44,6 +48,8 @@ public class AnomalyDetectionService {
     public List<AnomalyResult> detect(MetricSnapshot snapshot) {
         List<AnomalyResult> results = new ArrayList<>();
 
+        // each metric gets its own independent window — a latency spike and an
+        // error spike are different stories even on the same service
         results.add(score(snapshot.service(), "error_rate_pct", snapshot.errorRatePercent()));
         results.add(score(snapshot.service(), "p99_latency_ms", snapshot.p99LatencyMs()));
         results.add(score(snapshot.service(), "request_rate_rps", snapshot.requestRatePerSecond()));
@@ -67,16 +73,16 @@ public class AnomalyDetectionService {
         if (window.size() >= MIN_WINDOW_FOR_DETECTION) {
             float[] values = toFloatArray(window);
 
-            // DJL PyTorch NDArray tensor ops: compute mean and std over the sliding window
+            // mean + population variance on the GPU-capable path
             try (NDArray data = ndManager.create(values)) {
                 float mean = data.mean().getFloat();
-                // population variance: E[(x - μ)²]
                 float variance = data.sub(mean).pow(2).mean().getFloat();
-                float std = (float) Math.sqrt(variance + 1e-8f); // epsilon prevents div-by-zero
+                float std = (float) Math.sqrt(variance + 1e-8f); // epsilon: flat windows have σ=0
                 zScore = Math.abs((currentValue - mean) / std);
                 isAnomaly = zScore > zScoreThreshold;
             } catch (Exception e) {
-                // Pure Java fallback when DJL native engine is unavailable
+                // same math in plain java — keeps detection alive on boxes where
+                // the native PyTorch engine won't load (looking at you, CI)
                 float[] vals = toFloatArray(window);
                 double mean = 0.0;
                 for (float v : vals) mean += v;
@@ -90,7 +96,8 @@ public class AnomalyDetectionService {
             }
         }
 
-        // Slide the window
+        // score first, THEN admit the value — otherwise a spike would drag the
+        // mean toward itself and mask its own anomaly
         if (window.size() >= windowSize) window.pollFirst();
         window.addLast(currentValue);
 
@@ -104,6 +111,7 @@ public class AnomalyDetectionService {
         return arr;
     }
 
+    // exposed on /api/insights/health so you can see how warmed-up each window is
     public Map<String, Integer> windowStats() {
         Map<String, Integer> stats = new LinkedHashMap<>();
         metricWindows.forEach((k, v) -> stats.put(k, v.size()));
