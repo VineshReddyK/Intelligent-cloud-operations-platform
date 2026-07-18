@@ -4,6 +4,8 @@ import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.info.Info;
 import org.springframework.context.annotation.Configuration;
 
+// swagger metadata — no security scheme here since the AI endpoints are
+// read-only insights, gated at the gateway rather than per-service
 @Configuration
 @OpenAPIDefinition(
         info = @Info(
