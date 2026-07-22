@@ -13,6 +13,11 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * A small read-only window into the operator — handy for demos and dashboards
+ * so you don't have to shell into the cluster with kubectl just to see what
+ * the operator is managing.
+ */
 @RestController
 @RequestMapping("/api/operator")
 @Tag(name = "Operator Status", description = "Kubernetes Operator management and CRD status")
@@ -45,6 +50,8 @@ public class OperatorStatusController {
                 .getItems()
                 .size();
 
+        // reaching the API server for the version doubles as a liveness check —
+        // if this call works, our cluster connection is healthy
         String k8sVersion = k8sClient.getKubernetesVersion().getGitVersion();
 
         return ResponseEntity.ok(Map.of(
