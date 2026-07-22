@@ -7,6 +7,11 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
+/**
+ * Context-loads test. The KubernetesClient is mocked because CI has no
+ * cluster to connect to, and the reconcile interval is pushed way out so
+ * the scheduled loop can't fire against that mock during startup.
+ */
 @SpringBootTest
 @ActiveProfiles("test")
 @TestPropertySource(properties = {
