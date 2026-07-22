@@ -18,14 +18,20 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Core reconciliation loop for the ICOP Kubernetes Operator.
+ * The reconcile loop — the heart of the operator.
  *
- * Every reconcile interval:
- *  1. Lists all IntelligentScalingPolicy CRs in the cluster
- *  2. For each policy, queries the AI service for the target service's risk level
- *  3. Computes the desired replica count from the policy's ScalingRules
- *  4. Patches the target Deployment's replica count if it differs
- *  5. Updates the CR's status subresource (risk level, replicas, timestamp)
+ * This is the standard Kubernetes controller pattern: on a timer, look at
+ * every IntelligentScalingPolicy in the cluster and nudge reality toward
+ * what each one asks for. What makes it "intelligent" is where the desired
+ * state comes from — not a static CPU threshold like a plain HPA, but the
+ * AI service's risk assessment for that service.
+ *
+ * Per policy, each pass:
+ *   1. ask the AI service for the target's current risk level
+ *   2. turn that risk into a desired replica count via the policy's rules
+ *   3. read the Deployment's actual replica count
+ *   4. scale only if they differ
+ *   5. write what happened back to the CR's status subresource
  */
 @Component
 public class ScalingReconciler {
@@ -44,6 +50,8 @@ public class ScalingReconciler {
         this.k8sClient = k8sClient;
         this.aiClient = aiClient;
         this.decisionService = decisionService;
+        // expose the loop count as a gauge so prometheus can confirm the
+        // operator is actually alive and reconciling, not just running
         meterRegistry.gauge("icop.operator.reconcile.total", reconcileCount);
     }
 
@@ -73,13 +81,13 @@ public class ScalingReconciler {
         String aiUrl = policy.getSpec().getAiServiceUrl();
 
         try {
-            // Step 1: ask AI service for current risk level
+            // 1. current risk from the AI service (falls back to UNKNOWN if it's down)
             RiskLevel risk = aiClient.getRiskLevel(aiUrl, targetService);
 
-            // Step 2: compute desired replicas
+            // 2. risk → replica count, clamped to the policy's min/max
             int desired = decisionService.computeDesiredReplicas(policy.getSpec(), risk);
 
-            // Step 3: read current replica count from Deployment
+            // 3. what the deployment actually has right now
             var deployment = k8sClient.apps().deployments()
                     .inNamespace(namespace)
                     .withName(targetService)
@@ -93,7 +101,8 @@ public class ScalingReconciler {
             int current = deployment.getSpec().getReplicas() != null
                     ? deployment.getSpec().getReplicas() : 1;
 
-            // Step 4: scale only when replica count differs
+            // 4. only touch the cluster when there's an actual delta — reconcile
+            // runs constantly, so a no-op scale every 30s would be pure noise
             if (current != desired) {
                 log.info("Scaling {}/{}: {} → {} replicas (risk={})", namespace, targetService, current, desired, risk);
 
@@ -105,7 +114,8 @@ public class ScalingReconciler {
                 log.debug("No scaling needed for {}/{}: {} replicas (risk={})", namespace, targetService, current, risk);
             }
 
-            // Step 5: update CRD status subresource
+            // 5. record the outcome on status — this is what `kubectl get isp`
+            // shows and how you audit why a service got scaled
             IntelligentScalingPolicyStatus status = new IntelligentScalingPolicyStatus();
             status.setCurrentReplicas(desired);
             status.setDesiredReplicas(desired);
@@ -114,16 +124,22 @@ public class ScalingReconciler {
             status.setReason(current != desired
                     ? "Scaled from " + current + " to " + desired + " due to " + risk + " risk"
                     : "No change — " + desired + " replicas at " + risk + " risk");
+            // observedGeneration lets users tell "the operator has seen my
+            // latest edit" from "it's still acting on the old spec"
             status.setObservedGeneration(policy.getMetadata().getGeneration() != null
                     ? policy.getMetadata().getGeneration() : 0L);
 
             policy.setStatus(status);
+            // updateStatus hits the /status subresource specifically — spec and
+            // status have separate RBAC and shouldn't be written together
             k8sClient.resources(IntelligentScalingPolicy.class, IntelligentScalingPolicyList.class)
                     .inNamespace(namespace)
                     .withName(name)
                     .updateStatus(policy);
 
         } catch (Exception e) {
+            // one bad policy must not stop the others — log it and carry on,
+            // the next pass will retry anyway
             log.error("Reconciliation failed for policy {}/{}: {}", namespace, name, e.getMessage(), e);
         }
     }
