@@ -7,6 +7,11 @@ import org.springframework.web.client.RestTemplate;
 
 import java.time.Duration;
 
+/**
+ * RestTemplate for the AiInsightClient calls. The timeouts are the whole
+ * point — a slow AI service must not stall the reconcile loop, since the
+ * loop scales real deployments and can't afford to hang.
+ */
 @Configuration
 public class RestTemplateConfig {
 
