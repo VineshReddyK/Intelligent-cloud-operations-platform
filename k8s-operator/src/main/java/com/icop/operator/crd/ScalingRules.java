@@ -2,6 +2,11 @@ package com.icop.operator.crd;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+/**
+ * The risk-to-replicas mapping, nested under spec. Defaults sketch a sensible
+ * curve — steady at 2 when calm, jumping to 10 when things are on fire — but
+ * every service can override these in its own policy YAML.
+ */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ScalingRules {
 
