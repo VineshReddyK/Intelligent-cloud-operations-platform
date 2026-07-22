@@ -4,6 +4,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 
+/**
+ * Context-loads test. Gateway routing is disabled and the compatibility
+ * verifier is turned off so the context can start without a live discovery
+ * setup; a real jwt.secret is supplied so JwtAuthFilter's @Value resolves.
+ */
 @SpringBootTest
 @TestPropertySource(properties = {
         "jwt.secret=test-secret-key-that-is-long-enough-for-hmac",
