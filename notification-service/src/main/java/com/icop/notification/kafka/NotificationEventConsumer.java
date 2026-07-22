@@ -11,6 +11,12 @@ import java.math.BigDecimal;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * The pure consumer at the end of the chain — it listens to both order and
+ * payment topics and never publishes anything of its own. Two separate
+ * consumer groups so notification lag can't slow down (or get tangled with)
+ * the payment flow reading the same order.events topic.
+ */
 @Component
 public class NotificationEventConsumer {
 
@@ -29,9 +35,13 @@ public class NotificationEventConsumer {
             switch (event.eventType()) {
                 case "ORDER_CREATED" -> notificationService.handleOrderCreated(event);
                 case "ORDER_CANCELLED" -> notificationService.handleOrderCancelled(event);
+                // this topic carries the whole order lifecycle; we only care
+                // about a couple of its event types
                 default -> log.debug("Unhandled order event type: {}", event.eventType());
             }
         } catch (Exception e) {
+            // never rethrow — a notification is best-effort, and a poison
+            // message shouldn't wedge the consumer in a redelivery loop
             log.error("Error processing order event: {}", e.getMessage());
         }
     }
@@ -50,6 +60,9 @@ public class NotificationEventConsumer {
         }
     }
 
+    // order and payment events have slightly different shapes — order calls it
+    // "totalAmount", payment calls it "amount" — so normalize both into one
+    // NotificationEvent here and let the handlers stay simple
     private NotificationEvent toEvent(Map<String, Object> raw) {
         return new NotificationEvent(
                 (String) raw.get("eventType"),
