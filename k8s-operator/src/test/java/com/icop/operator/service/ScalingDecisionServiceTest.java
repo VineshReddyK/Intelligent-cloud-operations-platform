@@ -8,6 +8,12 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * The decision logic is pure, so these tests need no Spring, no k8s, no
+ * mocks — just plug in a risk level and check the replica count. The clamp
+ * test is the one that matters most: it's the guardrail against a
+ * misconfigured policy scaling somewhere dangerous.
+ */
 class ScalingDecisionServiceTest {
 
     private ScalingDecisionService service;
@@ -40,13 +46,14 @@ class ScalingDecisionServiceTest {
 
     @Test
     void highRiskClampsToMax() {
+        // rule says 7, but the policy caps at 5 — the cap has to win
         spec.setMaxReplicas(5);
-        // highRiskReplicas=7, max=5 → should clamp to 5
         assertThat(service.computeDesiredReplicas(spec, RiskLevel.HIGH)).isEqualTo(5);
     }
 
     @Test
     void unknownRiskFallsBackToLow() {
+        // AI unreachable → hold at the safe baseline, don't guess
         assertThat(service.computeDesiredReplicas(spec, RiskLevel.UNKNOWN)).isEqualTo(2);
     }
 }
