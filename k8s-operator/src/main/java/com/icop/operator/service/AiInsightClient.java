@@ -11,6 +11,14 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 
+/**
+ * The operator's one link to the AI service. Pulls the predictions list and
+ * picks out the target service's risk.
+ *
+ * Crucially, any failure here returns UNKNOWN rather than throwing — the AI
+ * service being down should never take the operator down with it. UNKNOWN
+ * then resolves to a safe baseline in ScalingDecisionService.
+ */
 @Service
 public class AiInsightClient {
 
@@ -25,6 +33,8 @@ public class AiInsightClient {
     public RiskLevel getRiskLevel(String aiServiceUrl, String targetService) {
         try {
             String url = aiServiceUrl + "/api/insights/predictions";
+            // ParameterizedTypeReference so Jackson keeps the generic —
+            // otherwise the list deserializes to LinkedHashMaps, not records
             List<FailurePrediction> predictions = restTemplate.exchange(
                     url, HttpMethod.GET, null,
                     new ParameterizedTypeReference<List<FailurePrediction>>() {}
