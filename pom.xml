@@ -36,7 +36,7 @@
         <resilience4j.version>2.3.0</resilience4j.version>
         <testcontainers.version>1.20.6</testcontainers.version>
         <logstash-logback.version>8.0</logstash-logback.version>
-        <djl.version>0.31.0</djl.version>
+        <djl.version>0.36.0</djl.version>
         <fabric8.version>6.13.4</fabric8.version>
     </properties>
 
