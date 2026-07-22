@@ -17,9 +17,21 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+/**
+ * The gateway's front-door auth check. Every request into the platform passes
+ * through here first: validate the JWT once at the edge, then forward the
+ * caller's identity downstream as plain headers.
+ *
+ * The payoff of doing it here: the individual services can trust
+ * X-User-Email / X-User-Role and skip re-parsing the token themselves. This
+ * is a reactive GlobalFilter (Spring Cloud Gateway runs on WebFlux), so
+ * everything returns a Mono rather than blocking.
+ */
 @Component
 public class JwtAuthFilter implements GlobalFilter, Ordered {
 
+    // the only routes reachable without a token — you can't present a JWT
+    // before you've logged in to get one, and actuator is for the probes
     private static final List<String> PUBLIC_PATHS = List.of(
             "/api/auth/register",
             "/api/auth/login",
@@ -40,14 +52,18 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
         String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            // short-circuit with a 401 — setComplete() ends the exchange here
+            // without ever touching a downstream service
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
 
         try {
             String token = authHeader.substring(7);
-            Claims claims = extractClaims(token);
+            Claims claims = extractClaims(token); // throws if signature/expiry is bad
 
+            // stamp identity onto the forwarded request. downstream services
+            // read these instead of re-validating the token
             ServerWebExchange mutatedExchange = exchange.mutate()
                     .request(r -> r.header("X-User-Email", claims.getSubject())
                             .header("X-User-Role", claims.get("role", String.class)))
@@ -55,6 +71,7 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
 
             return chain.filter(mutatedExchange);
         } catch (Exception e) {
+            // any token problem is a 401 — don't leak which check failed
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
@@ -65,6 +82,7 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
     }
 
     private Claims extractClaims(String token) {
+        // same HMAC secret the user-service signs with — shared via config/secret
         SecretKey key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         return Jwts.parser()
                 .verifyWith(key)
@@ -73,6 +91,8 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
                 .getPayload();
     }
 
+    // -1 so this runs before the routing filters — auth has to happen before
+    // the request gets proxied anywhere
     @Override
     public int getOrder() {
         return -1;
